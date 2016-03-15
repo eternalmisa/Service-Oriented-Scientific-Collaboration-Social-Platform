@@ -1,0 +1,266 @@
+@*******************************************************************************
+* Licensed to the Apache Software Foundation (ASF) under one or more		   *
+* contributor license agreements.  See the NOTICE file distributed with	   *
+* this work for additional information regarding copyright ownership.         *
+* The ASF licenses this file to You under the Apache License, Version 2.0     *
+* (the "License"); you may not use this file except in compliance with        *
+* the License.  You may obtain a copy of the License at                       *
+*                                                                             *
+*    http://www.apache.org/licenses/LICENSE-2.0                               *
+*																			   *
+* Unless required by applicable law or agreed to in writing, software         *
+* distributed under the License is distributed on an "AS IS" BASIS,           *
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.    *
+* See the License for the specific language governing permissions and         *
+* limitations under the License.											   *
+*******************************************************************************@
+@(postServices: List[models.Post],
+ commentForm: play.data.Form[models.Comment],
+ editUser: models.User)
+@import helper._
+<script type="text/javascript">
+    function deletePostById(postId){
+            var obj = {
+                postId : postId
+            }
+            $.ajax({
+                url: "/deletePost",
+                data: JSON.stringify(obj),
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                type: "POST"
+            }).done(function(data) {
+                var response = data;
+                if("error" in response){
+                    alert("delete error!")
+                }else{
+                    window.location.reload();
+                }
+            });
+    }
+
+    function likePost(postId){
+        var obj = {
+            postId : postId
+        }
+        $.ajax({
+            url: "/likePost",
+            data: JSON.stringify(obj),
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            type: "POST"
+        }).done(function(data) {
+            var response = data;
+            if("error" in response){
+                alert("like error!")
+            }else{
+                window.location.reload();
+            }
+        });
+    }
+
+    function sharePost(postId){
+           var obj = {
+               postId : postId,
+               postUserId : document.getElementById("inputUserId").value,
+               postUserFirstName : document.getElementById("inputUserFirstName").value,
+               postUserLastName : document.getElementById("inputUserLastName").value,
+           }
+           $.ajax({
+               url: "/sharePost",
+               data: JSON.stringify(obj),
+               headers: {
+                   'Content-Type': 'application/json'
+               },
+               type: "POST"
+           }).done(function(data) {
+              window.location.reload();
+           });
+       }
+
+       function editPost(postId, text){
+              var ntext = prompt("Edit here:",text);
+              var obj = {
+                  postId : postId,
+                  text : ntext,
+              }
+              $.ajax({
+                  url: "/editPost",
+                  data: JSON.stringify(obj),
+                  headers: {
+                      'Content-Type': 'application/json'
+                  },
+                  type: "POST"
+              }).done(function(data) {
+                  window.location.reload();
+              });
+          }
+
+    function commentPost(postId){
+          var commentBox = $('#commentBox'+postId);
+          if (commentBox.css("display") == "none") {
+              commentBox.show();
+              $.get("/allComment/"+postId, function(data){
+                  $("#comment"+postId).empty();
+                  var commentServices = data;
+                  if("error" in commentServices) return;
+                  for (cid in commentServices) {
+                      var json = commentServices[cid];
+                      var html = "<li><h6>"+json["time"]+"</h6>&nbsp;&nbsp;" +
+                       json["commentUserFirstName"] + "&nbsp;"+ json["commentUserLastName"]
+                       +"</a>&nbsp;replied:&nbsp;"+json["text"]+"</li>";
+                       $("#comment"+postId).append(html);
+                     }
+              });
+            } else {
+              commentBox.hide();
+            }
+    }
+</script>
+@self("Home Page") {
+
+<!--Navigation bar (Cite Bootstrap template)-->
+<nav id="bar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped once screen zoom out -->
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <img alt="Logo" class="navbar-brand" src="/assets/image/logo.png">
+        </div>
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div id="navbar" class="navbar-collapse collapse">
+            <ul class="nav nav-pills navbar-right">
+                <li  class="nav-btn"><a href="mainpage"><span class="glyphicon glyphicon-home"></span> Home</a></li>
+                @if(!session.get("email")) {
+                <form class="navbar-form navbar-right" action="@routes.Application.login()">
+                    <button type="submit" class="btn btn-success">Log in</button>
+                </form>
+                } else {
+                <li id="drop" class="dropdown nav-btn"><a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                    <span class="glyphicon glyphicon-user"></span> My Account<span class="caret"></span></a>
+                    <ul class="dropdown-menu">
+                        <li><a href="@routes.UserController.editProfile()">Edit Profile</a></li>
+                        <li><a href="@routes.Application.logout()">Log out</a></li>
+                    </ul>
+                </li>
+                }
+            </ul>
+        </div><!--/navbar-collapse-->
+    </div><!--/container-fluid-->
+</nav>
+
+<div class="row">
+    <div id="wrapper1" class="col-md-10 col-md-offset-1">
+        <div id="profile1">
+            <img id="photo" src="/assets/image/default.jpg" class="img-circle center-block" alt="photo">
+            <p class="text-center"><strong>@editUser.getEmail()</strong></p>
+            <p class="text-center">@editUser.getFirstName() @editUser.getLastName()</p>
+
+            <div style="margin-left:48%; margin-top:-8px;">
+
+                  <form id="Follow" action = "/follow" method="POST">
+                      <button type="submit" class="btn btn-success btn-xs" name="follow"><span style="color:white;">Follow</span></button>
+                  </form>
+            </div>
+            <div style="margin-left:47.5%; margin-top:-8px;">
+                  <form id="unFollow" action = "/unFollow" method="POST">
+                      <button type="submit" class="btn btn-warning btn-xs" name="unFollow"><span style="color:white;">Unfollow</span></button>
+                  </form>
+            </div>
+            <input id="inputUserId" type="hidden" value="@session.get("userId")"></input>
+            <input id="inputUserFirstName" type="hidden" value="@session.get("firstName")"></input>
+            <input id="inputUserLastName" type="hidden" value="@session.get("lastName")"></input>
+        </div>
+    </div>
+</div>
+
+<div id="content" class="row">
+    <div id="leftcontent1" class="col-md-3 col-md-offset-1">
+        <div id="sidebar1">
+         <br>
+         <div id="personal-info1">
+             <table class="table table-striped">
+                 <caption class="text-center"><strong>Personal Information</strong></caption>
+                 <tr>
+                     <td><span class="glyphicon glyphicon-th-large"><small> Name</small></span></td>
+                     <td><small><strong>@editUser.getFirstName() @editUser.getLastName()</strong></small></td>
+                 </tr>
+                 <tr>
+                     <td><span class="glyphicon glyphicon-heart"><small> Research</small></span></td>
+                     <td><small><strong>@editUser.getResearchFields()</strong></small></td>
+                 </tr>
+                 <tr>
+                     <td><span class="glyphicon glyphicon-education"><small> Highest Degree</small></span></td>
+                     <td><small><strong>@editUser.getHighestDegree()</strong></small></td>
+                 </tr>
+                 <tr>
+                     <td><span class="glyphicon glyphicon-phone-alt"><small> Phone</small></span></td>
+                     <td><small><strong>@editUser.getPhoneNumber()</strong></small></td>
+                 </tr>
+                 <tr>
+                     <td><span class="glyphicon glyphicon-search"><small> Affiliation</small></span></td>
+                     <td><small><strong>@editUser.getAffiliation()</strong></small></td>
+                 </tr>
+             </table>
+         </div>
+       </div>
+    </div>
+ <div id="rightcontent1" class="col-md-7">
+     <div id="stream-list1">
+         @for(postService <- postServices){
+         <div class="soc-box1">
+             <div class="soc">
+                 <img src="/assets/image/default.jpg" class="img-circle user-picture" alt="photo">
+                 <a href="homepage">@postService.getPostUserFirstName() @postService.getPostUserLastName()</a>
+             </div>
+             <div class="post-time text-right">
+                 <h6><span class="glyphicon glyphicon-time"></span> @postService.getTime()</h6>
+             </div>
+             <p class="post-text">@postService.getText()</p>
+             <div class="btn-group btn-group-justified" role="group" aria-label="...">
+               <div class="btn-group" role="group">
+                   <button type="button" onclick="sharePost(@postService.getId())" class="btn btn-default"><small><span class="glyphicon glyphicon-list-alt"></span> Share </small></button>
+               </div>
+                 <div class="btn-group" role="group">
+                     <button type="button" type="button" onclick="commentPost(@postService.getId())" class="btn btn-default"><span class="glyphicon glyphicon-list-alt"></span><small> Reply </small></button>
+                 </div>
+                 <div class="btn-group" role="group">
+                     <button type="button" onclick="likePost(@postService.getId(),@postService.getLikes())" class="btn btn-default"><span class="glyphicon glyphicon-heart"></span><small> Like : <span id="@postService.getId()">@postService.getLikes()</span></small></button>
+                 </div>
+                 <div class="btn-group" role="group">
+                     <button type="button" onclick="editPost('@postService.getId()','@postService.getText()')" class="btn btn-default"><small><span class="glyphicon glyphicon-list-alt"></span> EditHere! </small></button>
+                 </div>
+                 <div class="btn-group" role="group">
+                     <button type="button" onclick="deletePostById(@postService.getId())" class="btn btn-default"><span class="glyphicon glyphicon-trash"></span><small> Delete</small></button>
+                 </div>
+             </div>
+
+             <div class="comment-box" style="display:none;" id="commentBox@postService.getId()">
+                 <div class="comment">
+                     <ol class="list-unstyled" id="comment@postService.getId()">
+                     </ol>
+                 </div>
+
+                 @helper.form(action = routes.UserController.addComment) {
+                     <form id="form@postService.getId()" method="post">
+                         <input type="hidden" name="postId" id="postId" value="@postService.getId()">
+                         <input type="hidden" name="homepageflag" id="homepageflag" value="homepageflag">
+                         <input class="form-control" type="hidden" name="commentUserId" id="commentUserId" value="@session.get("userId")">
+                         <input type="text" class="form-control" placeholder="Type Your comment" name="text">
+                         <button type="submit" class="btn btn-info pull-right submitBtn btn-xs">Submit</button>
+                     </form>
+                 }
+             </div>
+         </div><br>
+         }
+        </div>
+    </div>
+</div>
+}

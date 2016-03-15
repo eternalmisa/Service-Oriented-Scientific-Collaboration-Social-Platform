@@ -1,0 +1,68 @@
+# Routes
+# This file defines all application routes (Higher priority routes first)
+# ~~~~
+
+# Home page
+GET         /home                                                controllers.ClimateServiceController.home(email ?= null, vfile ?= null, dataset ?= null)
+GET 		/													 controllers.ClimateServiceController.home(email ?= null, vfile ?= null, dataset ?= null)
+GET		/login						controllers.Application.login()
+GET		/logout						controllers.Application.logout()
+GET		/authenticate				controllers.Application.authenticate()
+GET		/signup						controllers.Application.signup()
+GET		/createNewUser				controllers.Application.createNewUser()
+GET		/createSuccess				controllers.Application.createSuccess()
+POST	/isEmailExisted				controllers.Application.isEmailExisted()
+
+# BugReporting
+GET         /bugs                                                controllers.BugReportController.reports()
+GET         /newReport                                           controllers.BugReportController.newReport()
+GET         /bug/list                                            controllers.BugReportController.list()
+POST        /delete/report                                       controllers.BugReportController.deleteReport()
+POST        /solve/report                                        controllers.BugReportController.solveReport()
+
+# About Us
+GET         /aboutus                                             controllers.AboutusController.aboutUs()
+GET         /aboutProject                                        controllers.AboutusController.aboutProject()
+
+# Climate Model
+GET			/climate											controllers.ClimateServiceController.home(email ?= null, vfile ?= null, dataset ?= null)
+GET			/climate/tutorial									controllers.ClimateServiceController.tutorial()
+GET			/climate/climateServices							controllers.ClimateServiceController.climateServices()
+GET			/climate/mostRecentlyAddedClimateServices			controllers.ClimateServiceController.mostRecentlyAddedClimateServices()
+GET			/climate/mostRecentlyUsedClimateServices			controllers.ClimateServiceController.mostRecentlyUsedClimateServices()
+GET			/climate/mostPopularClimateServices					controllers.ClimateServiceController.mostPopularClimateServices()
+POST		/climate/new/climateServices    					controllers.ClimateServiceController.newClimateService()
+POST    	/climate/delete/climateServices   					controllers.ClimateServiceController.deleteClimateService()
+POST		/climate/download/climateServices					controllers.ClimateServiceController.downloadClimateService()
+POST		/climate/edit/climateServices						controllers.ClimateServiceController.editClimateService()
+GET			/climate/new/climateServices						controllers.ClimateServiceController.addClimateServices()
+GET			/climate/oneService									controllers.ClimateServiceController.oneService(url ?= null)
+#Keyword search
+GET 		/climate/datasets									controllers.DatasetController.datasetList()
+GET			/climate/searchDataSet 					 			controllers.DatasetController.searchDataset()
+GET 		/climate/getSearchResult				 			controllers.DatasetController.getSearchResult()
+
+#Map static resources from the /public folder to the /assets URL path
+GET     	/assets/*file               						controllers.Assets.at(path="/public", file)
+
+
+## Self
+GET         /mainpage                                            controllers.UserController.mainpage()
+GET         /homepage                                            controllers.UserController.homepage()
+POST        /addPost                                             controllers.UserController.addPost()
+POST    	/deletePost          				                 controllers.UserController.deletePost()
+POST		/sharePost											 controllers.UserController.sharePost()
+POST    	/likePost          				                     controllers.UserController.likePost()
+POST        /searchUser          				                 controllers.UserController.searchUser()
+POST        /addComment                                          controllers.UserController.addComment()
+GET         /allComment/:id                                      controllers.UserController.allComment(id: Long)
+GET         /editProfile                                         controllers.UserController.editProfile()
+GET		    /editUser				                             controllers.UserController.editUser()
+POST		/editPost											 controllers.UserController.editPost()
+POST        /searchUser          				                 controllers.UserController.searchUser()
+POST        /searchPost          				                 controllers.UserController.searchPost()
+POST        /goBack          				                     controllers.UserController.goBack()
+POST        /visitFollowee          				                     controllers.UserController.visitFollowee()
+POST        /follow          				                     controllers.UserController.follow()
+POST        /unFollow          				                     controllers.UserController.unFollow()
+POST        /sendLocation          				                 controllers.UserController.sendLocation()

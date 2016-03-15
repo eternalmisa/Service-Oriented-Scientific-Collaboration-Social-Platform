@@ -1,0 +1,413 @@
+@*******************************************************************************
+* Licensed to the Apache Software Foundation (ASF) under one or more		   *
+* contributor license agreements.  See the NOTICE file distributed with	   *
+* this work for additional information regarding copyright ownership.         *
+* The ASF licenses this file to You under the Apache License, Version 2.0     *
+* (the "License"); you may not use this file except in compliance with        *
+* the License.  You may obtain a copy of the License at                       *
+*                                                                             *
+*    http://www.apache.org/licenses/LICENSE-2.0                               *
+*																			   *
+* Unless required by applicable law or agreed to in writing, software         *
+* distributed under the License is distributed on an "AS IS" BASIS,           *
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.    *
+* See the License for the specific language governing permissions and         *
+* limitations under the License.											   *
+*******************************************************************************@
+@(postServices: List[models.Post],
+  postForm: play.data.Form[models.Post],
+  commentForm: play.data.Form[models.Comment],
+  user:models.User,
+  searchUserResult: List[models.User],
+  followees: List[models.User],
+  followers: List[models.User]
+  )
+<script type="text/javascript">
+
+    function likePost(postId){
+        var obj = {
+            postId : postId
+        }
+        $.ajax({
+            url: "/likePost",
+            data: JSON.stringify(obj),
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            type: "POST"
+        }).done(function(data) {
+            var response = data;
+            if("error" in response){
+                alert("like error!")
+            }else{
+                window.location.reload();
+            }
+        });
+    }
+
+    function searchUser(){
+        var obj = {
+            userKeyword : document.getElementById("userKeyword").value
+        }
+        $.ajax({
+            url: "/searchUser",
+            data: JSON.stringify(obj),
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            type: "POST"
+        }).done(function(data) {
+            var response = data;
+            if("error" in response){
+                alert("like error!")
+            }else{
+                window.location.reload();
+            }
+        });
+    }
+
+    function sharePost(postId){
+        var obj = {
+            postId : postId,
+            postUserId : document.getElementById("inputUserId").value,
+            postUserFirstName : document.getElementById("inputUserFirstName").value,
+            postUserLastName : document.getElementById("inputUserLastName").value,
+        }
+        $.ajax({
+            url: "/sharePost",
+            data: JSON.stringify(obj),
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            type: "POST"
+        }).done(function(data) {
+			       window.location.reload();
+        });
+    }
+
+    function visitFollowee(followeeId){
+       alert(followeeId);
+        var obj = {
+            followeeId : followeeId,
+        }
+        $.ajax({
+            url: "/visitFollowee",
+            data: JSON.stringify(obj),
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            type: "POST"
+        }).done(function(data) {
+             //window.location.reload();
+        });
+        //window.location.reload();
+    }
+
+    function searchUser(){
+            var obj = {
+                userKeyword : document.getElementById("userKeyword").value
+            }
+            $.ajax({
+                url: "/searchUser",
+                data: JSON.stringify(obj),
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                type: "POST"
+            }).done(function(data) {
+                    window.location.reload();
+            });
+        }
+
+    function searchPost(){
+            var obj = {
+                postKeyword : document.getElementById("postKeyword").value
+            }
+            $.ajax({
+                url: "/searchPost",
+                data: JSON.stringify(obj),
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                type: "POST"
+             }).done(function(data) {
+                    window.location.reload();
+             });
+    }
+
+    function goBack() {
+            $.ajax({
+              url: "/goBack",
+              type: "POST"
+            }).done(function(data) {
+              window.location.reload();
+            });
+          }
+
+    function commentPost(postId){
+        var commentBox = $('#commentBox'+postId);
+        if (commentBox.css("display") == "none") {
+            commentBox.show();
+            $.get("/allComment/"+postId, function(data){
+                $("#comment"+postId).empty();
+
+                var commentServices = data;
+                if("error" in commentServices) return;
+                for (cid in commentServices) {
+                var json = commentServices[cid];
+                var html = "<li><h6>"+json["time"]+"</h6>&nbsp;&nbsp;" +
+                       json["commentUserFirstName"] + "&nbsp;"+ json["commentUserLastName"]
+                       +"</a>&nbsp;replied:&nbsp;"+json["text"]+"</li>";
+                $("#comment"+postId).append(html);
+                }
+              });
+          } else {
+          commentBox.hide();
+      }
+    }
+
+
+    var la = NULL;
+    var lt = NULL;
+
+    function refreshLocation() {
+      if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(showPosition);
+        }
+      }
+
+    function showPosition(position) {
+      la = position.coords.latitude;
+      lt = position.coords.longitude;
+      alert("Location Refreshed! \n" + "Latitude: " + la + "\nLongitude" + lt);
+      var obj = {
+          latitude : la,
+          longtitude : lt,
+      }
+      $.ajax({
+          url: "/sendLocation",
+          data: JSON.stringify(obj),
+          headers: {
+              'Content-Type': 'application/json'
+          },
+          type: "POST"
+       }).done(function(data) {
+              window.location.reload();
+       });
+
+    }
+
+
+</script>
+@import helper._
+
+@self("Main Page") {
+<!--Navigation bar (Cite Bootstrap template)-->
+<nav id="bar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container-fluid">
+    <!-- Brand and toggle get grouped once screen zoom out -->
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+        </button>
+        <img alt="Logo" class="navbar-brand" src="/assets/image/logo.png">
+    </div>
+    <!-- Collect the nav links, forms, and other content for toggling -->
+    <div id="navbar" class="navbar-collapse collapse">
+        <ul class="nav nav-pills navbar-left">
+            <li  class="nav-btn"><a href="mainpage"><span class="glyphicon glyphicon-home"></span> Home</a></li>
+            @if(!session.get("email")) {
+            <form class="navbar-form navbar-right" action="@routes.Application.login()">
+                <button type="submit" class="btn btn-success">Log in</button>
+            </form>
+            } else {
+            <li id="drop" class="dropdown nav-btn"><a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                <span class="glyphicon glyphicon-user"></span> My Account<span class="caret"></span></a>
+                <ul class="dropdown-menu">
+                    <li><a href="@routes.Application.logout()">Log out</a></li>
+                </ul>
+            </li>
+            }
+        </ul>
+
+        <div class="navbar-form navbar-right">
+            <input type="text" id="userKeyword" class="form-control" placeholder="Search user">
+            <button type="button" onclick="searchUser()" class="btn btn-default">Search User!</button>
+            <button type="button" onclick="goBack()" class="btn btn-default">Go Back!</button>
+        </div>
+
+        <div class="navbar-form navbar-right">
+            <input type="text" id="postKeyword" class="form-control" placeholder="Search Post!">
+            <button type="button" onclick="searchPost()" class="btn btn-default">Search Post!</button>
+        </div>
+
+        <div class="navbar-form navbar-left">
+        <form id="getFolloweeform" action = "/visitFollowee" method="POST">
+            <button type="submit" class="btn btn-success">My Profile</button>
+            <input id="followeeId" name="followeeId" type="hidden" value="@session.get("userId")"></input>
+        </form>
+        </div>
+
+        <div class="navbar-form navbar-left">
+            <button type="submit" class="btn btn-success" onclick="refreshLocation()">Refresh Location</button>
+        </div>
+
+        </div><!--/navbar-collapse-->
+    </div><!--/container-fluid-->
+</nav>
+@helper.form(action = routes.UserController.addPost) {
+<!-- Post board & Personal information -->
+<div id="medium" class="row">
+    <div id="right" class="col-md-3 col-md-offset-1">
+        <div id="profile">
+        <img id="photo" src="/assets/image/default.jpg" class="img-circle center-block" alt="photo">
+
+        <p class="text-center" ><strong><font color="black">@session.get("firstName") @session.get("lastName")</font></strong></p>
+          <p class="text-center" ><strong><font color="black">@session.get("email")</font></strong></p>
+        </div>
+    </div>
+    <div id="left" class="col-md-7">
+        <div id="post-board">
+            <p id="prompt"><strong>Post a new message</strong></p>
+            <p id="less" class="text-right"><small>#Limited 100 characters#</small></p>
+            <form>
+                <input class="form-control" type="text" id="focusedInput" name="text" placeholder="What's on your mind?" required=""
+                       value='@postForm("text").value'>
+                <input class="form-control" type="hidden" name="postUserId" id="inputUserId" value="@session.get("userId")">
+                <input class="form-control" type="hidden" name="postUserFirstName" id="inputUserFirstName" value="@session.get("firstName")">
+                <input class="form-control" type="hidden" name="postUserLastName" id="inputUserLastName" value="@session.get("lastName")">
+                <ul class="nav nav-pills">
+                <li role="presentation"><a href="#"><span class="glyphicon glyphicon-map-marker"></span></a></li>
+                <li role="presentation">
+                    <input type="radio" name="visibility" value="public" checked> Public
+                    <input type="radio" name="visibility" value="private"> Private
+                    <p class="error" style="color: red;"></p>
+                </li>
+                <li role="presentation">
+                    <input type="radio" name="shareLocation" value="share" checked> Share Location
+                    <input type="radio" name="shareLocation" value="hide"> Do Not Share Location
+                    <p class="error" style="color: red;"></p>
+                </li>
+                </ul>
+                <button id="post-btn" type="submit" class="btn btn-danger pull-right">Post</button>
+            </form>
+        </div>
+    </div>
+</div><!--/medium-->
+}
+
+<div id="content" class="row">
+<!--Right-->
+    <div id="rightcontent" class="col-md-3  col-md-offset-1">
+    <div id="sidebar"><br/>
+    <!-- Hot Topic -->
+
+    <div id="followeeList" class="friends-list">
+        <table class="table table-hover text-center">
+            <caption class="text-center"><strong>Followees</strong></caption>
+            @for(followee <- followees){
+                  <tr>
+                    <form id="getFolloweeform@followee.getId()" action = "/visitFollowee" method="POST">
+                        <td><img src="/assets/image/2.jpg" alt="friends-list" class="img-circle friends-photo"></td>
+                        <td><a href="#" onclick="document.getElementById('getFolloweeform@followee.getId()').submit();">@followee.getFirstName @followee.getLastName</a></td>
+                        <td><input id="followeeId" name="followeeId" type="hidden" value="@followee.getId"></input></td>
+                    </form>
+                  </tr>
+              }
+
+        </table>
+    </div><!--/friend-list-->
+
+    <div class="line"></div><br/>
+
+    <div id="followerList" class="friends-list">
+        <table class="table table-hover text-center">
+            <caption class="text-center"><strong>Followers</strong></caption>
+            @for(follower <- followers){
+                  <tr>
+                    <form id="getFollowerform@follower.getId()" action = "/visitFollowee" method="POST">
+                        <td><img src="/assets/image/2.jpg" alt="friends-list" class="img-circle friends-photo"></td>
+                        <td><a href="#" onclick="document.getElementById('getFollowerform@follower.getId()').submit();">@follower.getFirstName @follower.getLastName</a></td>
+                        <td><input id="followeeId" name="followeeId" type="hidden" value="@follower.getId()"></input></td>
+                    </form>
+                  </tr>
+              }
+
+        </table>
+    </div><!--/friend-list-->
+
+    </div><!--/sidebar-->
+    </div><!--/rightcontent-->
+
+    <div id="leftcontent" class="col-md-7">
+    <!-- Dashboard -->
+    <div id="stream-list">
+        @for(postService <- postServices){
+        <div class="soc-box">
+            <div class="soc">
+
+              <form id="getPostUser@postService.getId()" action = "/visitFollowee" method="POST">
+                <img src="/assets/image/default.jpg" class="img-circle user-picture" alt="photo">
+                <a href="#" onclick="document.getElementById('getPostUser@postService.getId()').submit();">@postService.getPostUserFirstName() @postService.getPostUserLastName()</a>
+                <input id="followeeId" name="followeeId" type="hidden" value="@postService.getPostUserId()"></input>
+              </form>
+
+            </div>
+            <div class="post-time text-right">
+                <h6><span class="glyphicon glyphicon-time"></span> @postService.getTime()</h6>
+                <h6><span class="glyphicon"></span>@postService.getLocation()</h6>
+            </div>
+
+            <p class="post-text">@postService.getText()</p>
+            <div class="btn-group btn-group-justified" role="group" aria-label="...">
+                <div class="btn-group" role="group">
+                    <button type="button" onclick="sharePost(@postService.getId())" class="btn btn-default"><small><span class="glyphicon glyphicon-list-alt"></span> Share </small></button>
+                </div>
+                <div class="btn-group" role="group">
+                    <button type="button" type="button" onclick="commentPost(@postService.getId())" class="btn btn-default"><span class="glyphicon glyphicon-list-alt"></span><small> Reply </small></button>
+                </div>
+                <div class="btn-group" role="group">
+                    <button type="button" onclick="likePost(@postService.getId())" class="btn btn-default"><span class="glyphicon glyphicon-heart"></span><small> Like : @postService.getLikes()</small></button>
+                </div>
+            </div>
+
+            <div class="comment-box" style="display:none;" id="commentBox@postService.getId()">
+                <div class="comment">
+                    <ol class="list-unstyled" id="comment@postService.getId()">
+                    </ol>
+                </div>
+
+                @helper.form(action = routes.UserController.addComment) {
+                    <form id="form@postService.getId()" method="post">
+                        <input type="hidden" name="postId" id="postId" value="@postService.getId()">
+                        <input class="form-control" type="hidden" name="commentUserId" id="commentUserId" value="@session.get("userId")">
+                        <input type="text" class="form-control" placeholder="Type Your comment" name="text">
+                        <button type="submit" class="btn btn-info pull-right submitBtn btn-xs">Submit</button>
+                    </form>
+                }
+            </div>
+        </div>
+        <br>
+        }
+
+        @for(sUser <- searchUserResult){
+            <div class="soc-box">
+              <div class="soc">
+
+                <form id="getSearched@sUser.getId()" action = "/visitFollowee" method="POST">
+                  <img src="/assets/image/default.jpg" class="img-circle user-picture" alt="photo">
+                  <a href="#" onclick="document.getElementById('getSearched@sUser.getId()').submit();">@sUser.getUserName</a>
+                  <input id="followeeId" name="followeeId" type="hidden" value="@sUser.getId()"></input>
+                </form>
+
+              </div>
+            </div>
+
+
+          }
+    </div><!--leftcontent-->
+</div><!--Content-->
+}
